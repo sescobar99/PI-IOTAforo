@@ -10,6 +10,10 @@ import time
 from uuid import uuid4
 import json
 
+## RFID
+import RPi.GPIO as GPIO
+from mfrc522 import SimpleMFRC522
+
 # This sample uses the Message Broker for AWS IoT to send and receive messages
 # through an MQTT connection. On startup, the device connects to the server,
 # subscribes to a topic, and begins publishing messages to that topic.
@@ -117,6 +121,9 @@ if __name__ == '__main__':
     connect_future.result()
     print("Connected!")
 
+    reader = SimpleMFRC522()
+    print("RFID Reader Connected!")
+
     # Subscribe
     # print("Subscribing to topic '{}'...".format(args.topic))
     # subscribe_future, packet_id = mqtt_connection.subscribe(
@@ -130,23 +137,46 @@ if __name__ == '__main__':
     # Publish message to server desired number of times.
     # This step is skipped if message is blank.
     # This step loops forever if count was set to 0.
-    if args.message:
-        if args.count == 0:
-            print ("Sending messages until program killed")
-        else:
-            print ("Sending {} message(s)".format(args.count))
 
-        publish_count = 1
-        while (publish_count <= args.count) or (args.count == 0):
-            message = "{} [{}]".format(args.message, publish_count)
+    # if args.message:
+    #     if args.count == 0:
+    #         print ("Sending messages until program killed")
+    #     else:
+    #         print ("Sending {} message(s)".format(args.count))
+
+    #     publish_count = 1
+    #     while (publish_count <= args.count) or (args.count == 0):
+    #         message = "{} [{}]".format(args.message, publish_count)
+    #         print("Publishing message to topic '{}': {}".format(args.topic, message))
+    #         message_json = json.dumps(message)
+    #         mqtt_connection.publish(
+    #             topic=args.topic,
+    #             payload=message_json,
+    #             qos=mqtt.QoS.AT_LEAST_ONCE)
+    #         time.sleep(1)
+    #         publish_count += 1
+
+    try:
+        while True:
+            id, text = reader.read()
+            # print(id)
+            # print(text)
+            received_count += 1
+
+            message = '{"room": "22101" , "count" :' + str(received_count) + '}'
+            # has entered".format(id)
             print("Publishing message to topic '{}': {}".format(args.topic, message))
-            message_json = json.dumps(message)
+            #message_json = json.dumps(message)
+            print(message)
             mqtt_connection.publish(
                 topic=args.topic,
-                payload=message_json,
+                payload=message,
                 qos=mqtt.QoS.AT_LEAST_ONCE)
+
             time.sleep(1)
-            publish_count += 1
+    finally:
+        GPIO.cleanup()
+
 
     # Wait for all messages to be received.
     # This waits forever if count was set to 0.
