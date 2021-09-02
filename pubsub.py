@@ -31,7 +31,8 @@ parser.add_argument('--root-ca', default='/home/pi/certs/Amazon-root-CA-1.pem' ,
                                       "Necessary if MQTT server uses a certificate that's not already in " +
                                       "your trust store.")
 parser.add_argument('--client-id', default="test-" + str(uuid4()), help="Client ID for MQTT connection.")
-parser.add_argument('--topic', default="test/topic", help="Topic to subscribe to, and publish messages to.")
+parser.add_argument('--topic', default="test/topic", help="Topic to subscribe to.")
+parser.add_argument('--topic_sub', default="test/topic", help="Topic to publish messages to.")
 parser.add_argument('--message', default="Hello World!", help="Message to publish. " +
                                                               "Specify empty string to publish nothing.")
 parser.add_argument('--count', default=0, type=int, help="Number of messages to publish/receive before exiting. " +
@@ -52,6 +53,7 @@ args = parser.parse_args()
 io.init_logging(getattr(io.LogLevel, args.verbosity), 'stderr')
 
 received_count = 0
+actual_occupancy = 0
 received_all_event = threading.Event()
 
 # Callback when connection is accidentally lost.
@@ -76,9 +78,9 @@ def on_resubscribe_complete(resubscribe_future):
         resubscribe_results = resubscribe_future.result()
         print("Resubscribe results: {}".format(resubscribe_results))
 
-        for topic, qos in resubscribe_results['topics']:
+        for topic_sub, qos in resubscribe_results['topics']:
             if qos is None:
-                sys.exit("Server rejected resubscribe to topic: {}".format(topic))
+                sys.exit("Server rejected resubscribe to topic: {}".format(topic_sub))
 
 
 # Callback when the subscribed topic receives a message
@@ -125,14 +127,14 @@ if __name__ == '__main__':
     print("RFID Reader Connected!")
 
     # Subscribe
-    # print("Subscribing to topic '{}'...".format(args.topic))
-    # subscribe_future, packet_id = mqtt_connection.subscribe(
-    #     topic=args.topic,
-    #     qos=mqtt.QoS.AT_LEAST_ONCE,
-    #     callback=on_message_received)
+    print("Subscribing to topic '{}'...".format(args.topic_sub))
+    subscribe_future, packet_id = mqtt_connection.subscribe(
+        topic=args.topic_sub,
+        qos=mqtt.QoS.AT_LEAST_ONCE,
+        callback=on_message_received)
 
-    # subscribe_result = subscribe_future.result()
-    # print("Subscribed with {}".format(str(subscribe_result['qos'])))
+    subscribe_result = subscribe_future.result()
+    print("Subscribed with {}".format(str(subscribe_result['qos'])))
 
     # Publish message to server desired number of times.
     # This step is skipped if message is blank.
@@ -159,13 +161,16 @@ if __name__ == '__main__':
     try:
         while True:
             id, text = reader.read()
-            received_count += 1
+            actual_occupancy += 1
+            # print(id)
+            # print(text)
+            # print(actual_occupancy)
 
-            message = '{"actual_occupancy" :' + str(received_count) + '}'
+            message = '{"actual_occupancy" :' + str(actual_occupancy) + '}'
             # has entered".format(id)
             print("Publishing message to topic '{}': {}".format(args.topic, message))
             #message_json = json.dumps(message)
-            print(message)
+            # print(message)
             mqtt_connection.publish(
                 topic=args.topic,
                 payload=message,
