@@ -16,20 +16,21 @@ import json
 # The device should receive those same messages back from the message broker,
 # since it is subscribed to that same topic.
 
+
 parser = argparse.ArgumentParser(description="Send and receive messages through and MQTT connection.")
-parser.add_argument('--endpoint', required=True, help="Your AWS IoT custom endpoint, not including a port. " +
+parser.add_argument('--endpoint', default="alal4hcl2fp3w-ats.iot.us-east-2.amazonaws.com" , help="Your AWS IoT custom endpoint, not including a port. " +
                                                       "Ex: \"abcd123456wxyz-ats.iot.us-east-1.amazonaws.com\"")
 parser.add_argument('--port', type=int, help="Specify port. AWS IoT supports 443 and 8883.")
-parser.add_argument('--cert', help="File path to your client certificate, in PEM format.")
-parser.add_argument('--key', help="File path to your private key, in PEM format.")
-parser.add_argument('--root-ca', help="File path to root certificate authority, in PEM format. " +
+parser.add_argument('--cert', default='/home/pi/certs/device.pem.crt' , help="File path to your client certificate, in PEM format.")
+parser.add_argument('--key', default='/home/pi/certs/private.pem.key' , help="File path to your private key, in PEM format.")
+parser.add_argument('--root-ca', default='/home/pi/certs/Amazon-root-CA-1.pem' , help="File path to root certificate authority, in PEM format. " +
                                       "Necessary if MQTT server uses a certificate that's not already in " +
                                       "your trust store.")
 parser.add_argument('--client-id', default="test-" + str(uuid4()), help="Client ID for MQTT connection.")
 parser.add_argument('--topic', default="test/topic", help="Topic to subscribe to, and publish messages to.")
 parser.add_argument('--message', default="Hello World!", help="Message to publish. " +
                                                               "Specify empty string to publish nothing.")
-parser.add_argument('--count', default=10, type=int, help="Number of messages to publish/receive before exiting. " +
+parser.add_argument('--count', default=0, type=int, help="Number of messages to publish/receive before exiting. " +
                                                           "Specify 0 to run forever.")
 parser.add_argument('--use-websocket', default=False, action='store_true',
     help="To use a websocket instead of raw mqtt. If you " +
@@ -84,6 +85,7 @@ def on_message_received(topic, payload, dup, qos, retain, **kwargs):
     if received_count == args.count:
         received_all_event.set()
 
+
 if __name__ == '__main__':
     # Spin up resources
     event_loop_group = io.EventLoopGroup(1)
@@ -91,39 +93,20 @@ if __name__ == '__main__':
     client_bootstrap = io.ClientBootstrap(event_loop_group, host_resolver)
 
     proxy_options = None
-    if (args.proxy_host):
-        print("proxy host")
-        proxy_options = http.HttpProxyOptions(host_name=args.proxy_host, port=args.proxy_port)
-
-    if args.use_websocket == True:
-        credentials_provider = auth.AwsCredentialsProvider.new_default_chain(client_bootstrap)
-        mqtt_connection = mqtt_connection_builder.websockets_with_default_aws_signing(
-            endpoint=args.endpoint,
-            client_bootstrap=client_bootstrap,
-            region=args.signing_region,
-            credentials_provider=credentials_provider,
-            http_proxy_options=proxy_options,
-            ca_filepath=args.root_ca,
-            on_connection_interrupted=on_connection_interrupted,
-            on_connection_resumed=on_connection_resumed,
-            client_id=args.client_id,
-            clean_session=False,
-            keep_alive_secs=30)
-
-    else:
-        mqtt_connection = mqtt_connection_builder.mtls_from_path(
-            endpoint=args.endpoint,
-            port=args.port,
-            cert_filepath=args.cert,
-            pri_key_filepath=args.key,
-            client_bootstrap=client_bootstrap,
-            ca_filepath=args.root_ca,
-            on_connection_interrupted=on_connection_interrupted,
-            on_connection_resumed=on_connection_resumed,
-            client_id=args.client_id,
-            clean_session=False,
-            keep_alive_secs=30,
-            http_proxy_options=proxy_options)
+ 
+    mqtt_connection = mqtt_connection_builder.mtls_from_path(
+        endpoint=args.endpoint,
+        port=args.port,
+        cert_filepath=args.cert,
+        pri_key_filepath=args.key,
+        client_bootstrap=client_bootstrap,
+        ca_filepath=args.root_ca,
+        on_connection_interrupted=on_connection_interrupted,
+        on_connection_resumed=on_connection_resumed,
+        client_id=args.client_id,
+        clean_session=False,
+        keep_alive_secs=30,
+        http_proxy_options=proxy_options)
 
     print("Connecting to {} with client ID '{}'...".format(
         args.endpoint, args.client_id))
@@ -135,14 +118,14 @@ if __name__ == '__main__':
     print("Connected!")
 
     # Subscribe
-    print("Subscribing to topic '{}'...".format(args.topic))
-    subscribe_future, packet_id = mqtt_connection.subscribe(
-        topic=args.topic,
-        qos=mqtt.QoS.AT_LEAST_ONCE,
-        callback=on_message_received)
+    # print("Subscribing to topic '{}'...".format(args.topic))
+    # subscribe_future, packet_id = mqtt_connection.subscribe(
+    #     topic=args.topic,
+    #     qos=mqtt.QoS.AT_LEAST_ONCE,
+    #     callback=on_message_received)
 
-    subscribe_result = subscribe_future.result()
-    print("Subscribed with {}".format(str(subscribe_result['qos'])))
+    # subscribe_result = subscribe_future.result()
+    # print("Subscribed with {}".format(str(subscribe_result['qos'])))
 
     # Publish message to server desired number of times.
     # This step is skipped if message is blank.
