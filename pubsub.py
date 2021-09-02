@@ -14,6 +14,9 @@ import json
 import RPi.GPIO as GPIO
 from mfrc522 import SimpleMFRC522
 
+## Actuators
+from trafficlight import *
+
 # This sample uses the Message Broker for AWS IoT to send and receive messages
 # through an MQTT connection. On startup, the device connects to the server,
 # subscribes to a topic, and begins publishing messages to that topic.
@@ -85,9 +88,11 @@ def on_resubscribe_complete(resubscribe_future):
 
 # Callback when the subscribed topic receives a message
 def on_message_received(topic, payload, dup, qos, retain, **kwargs):
+    payload = json.loads(payload)
     print("Received message from topic '{}': {}".format(topic, payload))
     global received_count
     received_count += 1
+    actuators(payload['alert_level'])
     if received_count == args.count:
         received_all_event.set()
 
@@ -99,7 +104,7 @@ if __name__ == '__main__':
     client_bootstrap = io.ClientBootstrap(event_loop_group, host_resolver)
 
     proxy_options = None
- 
+
     mqtt_connection = mqtt_connection_builder.mtls_from_path(
         endpoint=args.endpoint,
         port=args.port,
@@ -162,9 +167,6 @@ if __name__ == '__main__':
         while True:
             id, text = reader.read()
             actual_occupancy += 1
-            # print(id)
-            # print(text)
-            # print(actual_occupancy)
 
             message = '{"actual_occupancy" :' + str(actual_occupancy) + '}'
             # has entered".format(id)
@@ -175,11 +177,10 @@ if __name__ == '__main__':
                 topic=args.topic,
                 payload=message,
                 qos=mqtt.QoS.AT_LEAST_ONCE)
-
             time.sleep(1)
     finally:
+        cleanAll()
         GPIO.cleanup()
-
 
     # Wait for all messages to be received.
     # This waits forever if count was set to 0.
