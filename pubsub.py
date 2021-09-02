@@ -159,11 +159,9 @@ if __name__ == '__main__':
     try:
         while True:
             id, text = reader.read()
-            # print(id)
-            # print(text)
             received_count += 1
 
-            message = '{"room": "22101" , "count" :' + str(received_count) + '}'
+            message = '{"actual_occupancy" :' + str(received_count) + '}'
             # has entered".format(id)
             print("Publishing message to topic '{}': {}".format(args.topic, message))
             #message_json = json.dumps(message)
