@@ -92,7 +92,8 @@ def on_message_received(topic, payload, dup, qos, retain, **kwargs):
     print("Received message from topic '{}': {}".format(topic, payload))
     global received_count
     received_count += 1
-    actuators(payload['alert_level'])
+    alert = payload['alert_level']
+    if alert != -1: actuators(alert)
     if received_count == args.count:
         received_all_event.set()
 
@@ -140,28 +141,6 @@ if __name__ == '__main__':
 
     subscribe_result = subscribe_future.result()
     print("Subscribed with {}".format(str(subscribe_result['qos'])))
-
-    # Publish message to server desired number of times.
-    # This step is skipped if message is blank.
-    # This step loops forever if count was set to 0.
-
-    # if args.message:
-    #     if args.count == 0:
-    #         print ("Sending messages until program killed")
-    #     else:
-    #         print ("Sending {} message(s)".format(args.count))
-
-    #     publish_count = 1
-    #     while (publish_count <= args.count) or (args.count == 0):
-    #         message = "{} [{}]".format(args.message, publish_count)
-    #         print("Publishing message to topic '{}': {}".format(args.topic, message))
-    #         message_json = json.dumps(message)
-    #         mqtt_connection.publish(
-    #             topic=args.topic,
-    #             payload=message_json,
-    #             qos=mqtt.QoS.AT_LEAST_ONCE)
-    #         time.sleep(1)
-    #         publish_count += 1
 
     try:
         while True:
