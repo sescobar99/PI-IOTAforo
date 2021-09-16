@@ -103,6 +103,7 @@ if __name__ == '__main__':
     event_loop_group = io.EventLoopGroup(1)
     host_resolver = io.DefaultHostResolver(event_loop_group)
     client_bootstrap = io.ClientBootstrap(event_loop_group, host_resolver)
+    occupancy_list =  []
 
     proxy_options = None
 
@@ -145,7 +146,14 @@ if __name__ == '__main__':
     try:
         while True:
             id, text = reader.read()
-            actual_occupancy += 1
+            if id in occupancy_list:
+                occupancy_list.remove(id)
+                actual_occupancy-= 1
+                print('ha salido', id)
+            else:
+                occupancy_list.append(id)
+                actual_occupancy+= 1
+                print('ha entrado', id)
 
             message = '{"actual_occupancy" :' + str(actual_occupancy) + '}'
             # has entered".format(id)
