@@ -1,11 +1,11 @@
 'use strict';
 var AWS = require('aws-sdk');
-var iotdata = new AWS.IotData({ endpoint: "alal4hcl2fp3w-ats.iot.us-east-2.amazonaws.com" });
-
 var alertThreshold1 = 0.5;
 var alertThreshold2 = 0.8;
 
 exports.handler = function (event, context, callback) {
+    var iotdata = new AWS.IotData({ endpoint: "alal4hcl2fp3w-ats.iot.us-east-2.amazonaws.com" });
+    // console.info(event);
     event.Records.forEach((record) => {
         //Uncomment for debuging
         /*
@@ -24,10 +24,22 @@ exports.handler = function (event, context, callback) {
                 }
             });
         */
-
+        /*
+            console.log(record.dynamodb);
+            console.log(record.dynamodb.NewImage.payload);
+            if (typeof record.dynamodb.NewImage == undefined) {
+                console.log()
+            };
+            if (true) {
+                return;
+            }
+         */
         if (record.eventName == 'MODIFY' || record.eventName == 'INSERT') {
+            // console.log(record);
+            // console.log(record.dynamodb);
+            // console.log(record.dynamodb.NewImage);
             //check fields existance
-            const placeData = [typeof record.dynamodb.NewImage.full_occupancy, typeof record.dynamodb.NewImage.threshold];
+            const placeData = [typeof record.dynamodb.NewImage.full_occupancy, typeof record.dynamodb.NewImage.threshold, typeof record.dynamodb.NewImage.payload];
             let message;
             let block = record.dynamodb.NewImage.block.S;
             let room = record.dynamodb.NewImage.room.S;
@@ -36,9 +48,25 @@ exports.handler = function (event, context, callback) {
                     alert_level: -1,
                     alert_message: "Room info not added in db",
                 };
-            } else {
-                let threshold = parseFloat(record.dynamodb.NewImage.threshold.N);
-                let full_occupancy = parseFloat(record.dynamodb.NewImage.full_occupancy.N);
+                // console.info("Room info not added in db");
+            }
+            else {
+                let threshold;
+                if (typeof record.dynamodb.NewImage.threshold.N === "undefined") {
+                    threshold = parseFloat(record.dynamodb.NewImage.threshold.S);
+                }
+                else {
+                    threshold = parseFloat(record.dynamodb.NewImage.threshold.N);
+                }
+
+                let full_occupancy;
+                if (typeof record.dynamodb.NewImage.full_occupancy.N === "undefined") {
+                    full_occupancy = parseFloat(record.dynamodb.NewImage.full_occupancy.S);
+                }
+                else {
+                    full_occupancy = parseFloat(record.dynamodb.NewImage.full_occupancy.N);
+                }
+
                 let actual_occupancy = parseFloat(JSON.parse(record.dynamodb.NewImage.payload.S).actual_occupancy);
                 let occupancy_ratio = (actual_occupancy / full_occupancy);
 
@@ -49,7 +77,8 @@ exports.handler = function (event, context, callback) {
 
                 if (occupancy_ratio >= ratioLevel2) {
                     alert_level = 2;
-                } else if (occupancy_ratio >= ratioLevel1) {
+                }
+                else if (occupancy_ratio >= ratioLevel1) {
                     alert_level = 1;
                 }
 
@@ -57,7 +86,7 @@ exports.handler = function (event, context, callback) {
                     // actual_occupancy: actual_occupancy,
                     // full_occupancy: full_occupancy,
                     // occupancy_ratio: occupancy_ratio ,
-                    // threshold: threshold ,
+                    // threshold: threshold,
                     // ratio_level_1 : ratioLevel1,
                     // ratio_level_2 : ratioLevel2 ,
                     alert_level: alert_level,
