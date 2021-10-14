@@ -1,0 +1,12 @@
+document.write('<footer class="py-4 bg-light mt-auto">');
+document.write('    <div class="container-fluid px-4">');
+document.write('        <div class="d-flex align-items-center justify-content-between small">');
+document.write('            <div class="text-muted">PROYECTO INTEGRADOR</div>');
+document.write('            <div>');
+document.write('                <a>Daniel Burbano</a>');
+document.write('                &middot;');
+document.write('                <a>Santiago Escobar</a>');
+document.write('            </div>');
+document.write('        </div>');
+document.write('    </div>');
+document.write('</footer>');

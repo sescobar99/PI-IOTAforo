@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no" />
+    <meta name="description" content="" />
+    <meta name="author" content="" />
+    <title>Sistema IoT para el Control de Aforos en Ciudad Universitaria</title>
+    <link href="https://cdn.jsdelivr.net/npm/simple-datatables@latest/dist/style.css" rel="stylesheet" />
+    <link href="css/styles.css" rel="stylesheet" />
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/js/all.min.js"
+        crossorigin="anonymous"></script>
+</head>
+
+<body class="sb-nav-fixed">
+    <script src="js/navbar.js"></script>
+    <div id="layoutSidenav">
+        <script src="js/sidebar.js"></script>
+        <div id="layoutSidenav_content">
+            <main>
+                <div class="container-fluid px-4">
+                    <h1 class="mt-4">Agregar espacio</h1>
+                    <ol class="breadcrumb mb-4">
+                        <li class="breadcrumb-item active">Nuevo espacio</li>
+                    </ol>
+                    <!-- My form -->
+                    <form id="mainForm">
+                        <input required type="text" class="form-control mb-2" name="block" placeholder="BLOQUE"><br>
+                        <input required type="text" class="form-control mb-2" name="room" placeholder="SALÓN"><br>
+                        <input required type="number" class="form-control mb-2" name="full_occupancy"
+                            placeholder="OCUPACIÓN TOTAL" min="0"><br>
+                        <input required type="number" class="form-control mb-2" name="threshold"
+                            placeholder="UMBRAL DE OCUPACIÓN" min="0" max="1" step="0.05"><br>
+                        <input type="submit" class="btn btn-primary mb-2" value="Save">
+                    </form>
+                    <!-- My form -->
+                </div>
+            </main>
+            <script src="js/footer.js"></script>
+        </div>
+    </div>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.0/dist/js/bootstrap.bundle.min.js"
+        crossorigin="anonymous"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.8.0/Chart.min.js" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/simple-datatables@latest" crossorigin="anonymous"></script>
+    <script src="js/put-item.js"></script>
+    <script src="js/sidebar-toogle.js"></script>
+    <script type="text/javascript">
+        const form = document.getElementById('mainForm');
+        form.onsubmit = async (e) => validateForm(e);
+    </script>
+</body>
+
+</html>
